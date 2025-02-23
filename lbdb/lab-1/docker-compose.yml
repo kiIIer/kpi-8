@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:13.3
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=50"  # Максимальна кількість одночасних підключень
+      - "-c"
+      - "shared_buffers=1GB"  # Розмір буфера пам'яті для кешування даних
+      - "-c"
+      - "effective_cache_size=4GB"  # Приблизний обсяг доступної кешованої пам'яті
+      - "-c"
+      - "work_mem=16MB"  # Обсяг пам'яті для кожного оператора сортування
+      - "-c"
+      - "maintenance_work_mem=512MB"  # Пам'ять для операцій обслуговування, таких як VACUUM
+      - "-c"
+      - "random_page_cost=1.1"  # Вартість випадкового доступу до сторінок
+      - "-c"
+      - "temp_file_limit=10GB"  # Ліміт розміру тимчасових файлів
+      - "-c"
+      - "log_min_duration_statement=200ms"  # Логувати запити, що виконуються довше 200 мс
+      - "-c"
+      - "idle_in_transaction_session_timeout=10s"  # Автоматичне завершення неактивних транзакцій
+      - "-c"
+      - "lock_timeout=1s"  # Час очікування блокування перед скасуванням операції
+      - "-c"
+      - "statement_timeout=60s"  # Ліміт часу на виконання запиту
+      - "-c"
+      - "shared_preload_libraries=pg_stat_statements"  # Включення модуля збору статистики запитів
+      - "-c"
+      - "pg_stat_statements.max=10000"  # Максимальна кількість збережених запитів у статистиці
+      - "-c"
+      - "pg_stat_statements.track=all"  # Відстеження всіх запитів
+    environment:
+      POSTGRES_DB: "killer"  # Ім'я бази даних
+      POSTGRES_USER: "killer"  # Користувач бази даних
+      POSTGRES_PASSWORD: "killer"  # Пароль для підключення
+      PGDATA: "/C/pg-docker/data"  # Шлях до збереження даних
+    volumes:
+      - .:/var/lib/postgresql/data  # Монтований том для збереження даних
+    ports:
+      - "5432:5432"  # Порт для підключення до бази
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U killer -d killer"]  # Перевірка стану бази даних
+      interval: 10s  # Інтервал перевірки
+      timeout: 5s  # Тайм-аут перевірки
+      retries: 5  # Кількість повторних перевірок
+      start_period: 10s  # Час очікування перед початком перевірок
+    restart: unless-stopped  # Перезапуск у разі збою
+    deploy:
+      resources:
+        limits:
+          cpus: '1'  # Обмеження використання CPU
+          memory: 4G  # Обмеження використання пам'яті
